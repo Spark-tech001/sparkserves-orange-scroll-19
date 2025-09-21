@@ -9,8 +9,8 @@ export default function Index() {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID, // from .env (public key)
       amount: order.amount,
       currency: order.currency,
-      name: "Your Company",
-      description: "Test Transaction",
+      name: "sparkserves",
+      description: "Transaction",
       order_id: order.id,
       handler: function (response: any) {
         alert(`Payment successful! Payment ID: ${response.razorpay_payment_id}`);
