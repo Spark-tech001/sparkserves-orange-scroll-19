@@ -21,6 +21,13 @@ import jsPDF from 'jspdf';
 import sparkLogo from "@/assets/spark-logo.png";
 import { supabase } from "@/integrations/supabase/client";
 
+// Declare Razorpay type for TypeScript
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+
 const Index = () => {
   const { toast } = useToast();
   const [selectedProduct, setSelectedProduct] = useState("dine-flow");
@@ -114,6 +121,91 @@ const Index = () => {
     }
 
     try {
+      // Load Razorpay script dynamically if not already loaded
+      if (!window.Razorpay) {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        document.body.appendChild(script);
+        
+        await new Promise((resolve) => {
+          script.onload = resolve;
+        });
+      }
+
+      // Create Razorpay order
+      const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
+        body: { 
+          amount: totals.total * 100, // Convert to paise
+          currency: 'INR',
+          receipt: `receipt_${Date.now()}`
+        }
+      });
+
+      if (orderError) {
+        throw new Error(orderError.message);
+      }
+
+      const options = {
+        key: 'rzp_live_RK5YLrW4IHsqid', // Razorpay public key
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'SparkServes',
+        description: `${products[selectedProduct as keyof typeof products].name} Subscription`,
+        order_id: orderData.id,
+        handler: async function (response: any) {
+          try {
+            // Verify payment
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }
+            });
+
+            if (verifyError || verifyData.status !== 'success') {
+              throw new Error('Payment verification failed');
+            }
+
+            // Payment verified successfully, now save to database
+            await processSuccessfulPayment(response.razorpay_payment_id);
+            
+          } catch (error) {
+            console.error('Payment verification error:', error);
+            toast({
+              title: "Payment Verification Failed",
+              description: "Your payment could not be verified. Please contact support.",
+              variant: "destructive",
+            });
+          }
+        },
+        prefill: {
+          name: proprietorName,
+          email: '',
+          contact: phoneNumber
+        },
+        theme: { 
+          color: 'hsl(var(--primary))' 
+        },
+      };
+
+      // @ts-ignore
+      const rzp1 = new window.Razorpay(options);
+      rzp1.open();
+      
+    } catch (error) {
+      console.error('Payment initiation error:', error);
+      toast({
+        title: "Payment Error",
+        description: "Failed to initiate payment. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const processSuccessfulPayment = async (paymentId: string) => {
+    try {
       // Save customer data to database
       const { data: customer, error: customerError } = await supabase
         .from('customers')
@@ -176,14 +268,15 @@ const Index = () => {
 
       if (invoiceError) throw invoiceError;
 
-      // Save payment record
+      // Save payment record with Razorpay payment ID
       await supabase
         .from('payments')
         .insert({
           invoice_id: invoice.id,
           amount: totals.total,
           status: 'completed',
-          payment_method: 'online'
+          payment_method: 'razorpay',
+          payment_id: paymentId
         });
 
       // Generate invoice data for display
@@ -216,7 +309,7 @@ const Index = () => {
       console.error('Error saving data:', error);
       toast({
         title: "Error",
-        description: "Failed to save subscription data. Please try again.",
+        description: "Payment received but failed to save subscription data. Please contact support.",
         variant: "destructive",
       });
     }

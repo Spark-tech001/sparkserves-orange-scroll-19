@@ -1,1 +1,17 @@
 project_id = "tprdfzcbackwywhdxere"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+
+[functions.create-razorpay-order]
+verify_jwt = false
+
+[functions.verify-razorpay-payment]
+verify_jwt = false
