@@ -767,30 +767,6 @@ const Index = () => {
                     Proceed to Payment
                   </Button>
 
-                  <div className="text-center pt-4">
-                    <p className="text-xs text-muted-foreground mb-3">Accepted Payment Methods</p>
-                    <div className="flex justify-center space-x-3">
-                      <div className="flex items-center space-x-1 bg-muted rounded-lg px-3 py-2">
-                        <CreditCard size={16} className="text-primary" />
-                        <span className="text-xs font-medium">Cards</span>
-                      </div>
-                      <div className="flex items-center space-x-1 bg-muted rounded-lg px-3 py-2">
-                        <Smartphone size={16} className="text-primary" />
-                        <span className="text-xs font-medium">UPI</span>
-                      </div>
-                      <div className="flex items-center space-x-1 bg-muted rounded-lg px-3 py-2">
-                        <Building2 size={16} className="text-primary" />
-                        <span className="text-xs font-medium">Net Banking</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
   );
 };
 
