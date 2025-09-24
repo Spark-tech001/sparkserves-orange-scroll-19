@@ -766,7 +766,13 @@ const Index = () => {
                   <Button className="w-full" size="lg" onClick={handleProceedToPayment}>
                     Proceed to Payment
                   </Button>
-
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 };
 
