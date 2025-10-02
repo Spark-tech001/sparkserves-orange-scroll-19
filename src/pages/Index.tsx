@@ -41,6 +41,7 @@ const Index = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [showInvoice, setShowInvoice] = useState(false);
   const [invoiceData, setInvoiceData] = useState<any>(null);
+  const [paymentOption, setPaymentOption] = useState<"full" | "partial">("full");
 
   // Set current date on component mount
   useEffect(() => {
@@ -133,10 +134,13 @@ const Index = () => {
         });
       }
 
+      // Calculate payment amount based on selected option
+      const paymentAmount = paymentOption === "partial" ? Math.round(totals.total * 0.5) : totals.total;
+      
       // Create Razorpay order
       const { data: orderData, error: orderError } = await supabase.functions.invoke('create-razorpay-order', {
         body: { 
-          amount: totals.total * 100, // Convert to paise
+          amount: paymentAmount * 100, // Convert to paise
           currency: 'INR',
           receipt: `receipt_${Date.now()}`
         }
@@ -761,8 +765,43 @@ const Index = () => {
                     <span>₹{totals.total.toLocaleString()}</span>
                   </div>
 
+                  <Separator />
+
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">Payment Option</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        type="button"
+                        variant={paymentOption === "full" ? "default" : "outline"}
+                        onClick={() => setPaymentOption("full")}
+                        className="h-auto py-3"
+                      >
+                        <div className="text-left w-full">
+                          <div className="font-semibold">Full Payment</div>
+                          <div className="text-xs opacity-80">Pay ₹{totals.total.toLocaleString()}</div>
+                        </div>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={paymentOption === "partial" ? "default" : "outline"}
+                        onClick={() => setPaymentOption("partial")}
+                        className="h-auto py-3"
+                      >
+                        <div className="text-left w-full">
+                          <div className="font-semibold">50% Now</div>
+                          <div className="text-xs opacity-80">Pay ₹{Math.round(totals.total * 0.5).toLocaleString()}</div>
+                        </div>
+                      </Button>
+                    </div>
+                    {paymentOption === "partial" && (
+                      <p className="text-sm text-muted-foreground">
+                        Remaining ₹{Math.round(totals.total * 0.5).toLocaleString()} to be paid later
+                      </p>
+                    )}
+                  </div>
+
                   <Button className="w-full" size="lg" onClick={handleProceedToPayment}>
-                    Proceed to Payment
+                    {paymentOption === "full" ? "Proceed to Payment" : "Pay 50% Now"}
                   </Button>
                 </CardContent>
               </Card>
