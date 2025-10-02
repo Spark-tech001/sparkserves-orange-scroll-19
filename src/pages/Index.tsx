@@ -625,8 +625,6 @@ const Index = () => {
                         <SelectValue placeholder="Choose billing cycle" />
                       </SelectTrigger>
                         <SelectContent>
-                          {/* <SelectItem value="quarterly">Quarterly</SelectItem>
-                          <SelectItem value="half-yearly">Half Yearly</SelectItem> */}
                           <SelectItem value="yearly">Annual</SelectItem>
                         </SelectContent>
                     </Select>
