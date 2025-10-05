@@ -81,13 +81,11 @@ const Index = () => {
     const product = products[selectedProduct as keyof typeof products];
     const priceInfo = product.prices[selectedTenure as keyof typeof product.prices];
     const basePrice = priceInfo.amount;
-    const discountAmount = Math.round(basePrice * 0.5); // 50% discount
-    const subtotal = basePrice - discountAmount;
+    const subtotal = basePrice;
     const gstAmount = 0; // GST is free (0%) as requested
 
     return {
       basePrice,
-      discountAmount,
       subtotal,
       gstAmount,
       total: subtotal,
