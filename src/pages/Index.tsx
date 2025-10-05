@@ -446,10 +446,6 @@ const Index = () => {
                       <span>Base Price:</span>
                       <span>₹{totals.basePrice.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between text-sm text-green-600">
-                      <span>Discount (50%):</span>
-                      <span>-₹{totals.discountAmount.toLocaleString()}</span>
-                    </div>
                     <div className="flex justify-between text-sm">
                       <span>Subtotal:</span>
                       <span>₹{totals.subtotal.toLocaleString()}</span>
