@@ -36,6 +36,7 @@ const Index = () => {
   const [gstNumber, setGstNumber] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [paymentOption, setPaymentOption] = useState<"full" | "partial">("full");
+  const [transactionType, setTransactionType] = useState<"new" | "complete">("new");
 
   // Set current date on component mount
   useEffect(() => {
@@ -78,6 +79,17 @@ const Index = () => {
   };
 
   const calculateTotal = () => {
+    // If completing previous transaction, show fixed remaining amount
+    if (transactionType === "complete") {
+      return {
+        basePrice: 1999,
+        subtotal: 1999,
+        gstAmount: 0,
+        total: 1999,
+        savings: ""
+      };
+    }
+
     const product = products[selectedProduct as keyof typeof products];
     const priceInfo = product.prices[selectedTenure as keyof typeof product.prices];
     const basePrice = priceInfo.amount;
@@ -426,18 +438,65 @@ const Index = () => {
                   <CardTitle>Order Summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Product:</span>
-                      <span className="font-medium">{products[selectedProduct as keyof typeof products].name}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Tenure:</span>
-                      <span className="font-medium">{tenures[selectedTenure as keyof typeof tenures].name}</span>
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">Transaction Type</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Button
+                        type="button"
+                        variant={transactionType === "new" ? "default" : "outline"}
+                        onClick={() => setTransactionType("new")}
+                        className="h-auto py-3"
+                      >
+                        <div className="text-center w-full">
+                          <div className="font-semibold text-xs">New Subscription</div>
+                        </div>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={transactionType === "complete" ? "default" : "outline"}
+                        onClick={() => setTransactionType("complete")}
+                        className="h-auto py-3"
+                      >
+                        <div className="text-center w-full">
+                          <div className="font-semibold text-xs">Complete Previous</div>
+                        </div>
+                      </Button>
                     </div>
                   </div>
 
                   <Separator />
+
+                  {transactionType === "new" ? (
+                    <>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Product:</span>
+                          <span className="font-medium">{products[selectedProduct as keyof typeof products].name}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Tenure:</span>
+                          <span className="font-medium">{tenures[selectedTenure as keyof typeof tenures].name}</span>
+                        </div>
+                      </div>
+
+                      <Separator />
+                    </>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Payment Type:</span>
+                          <span className="font-medium">Remaining 50%</span>
+                        </div>
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                          <span>Previous Payment:</span>
+                          <span>₹1,999 (50%)</span>
+                        </div>
+                      </div>
+
+                      <Separator />
+                    </>
+                  )}
 
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
@@ -469,8 +528,9 @@ const Index = () => {
 
                   <Separator />
 
-                  <div className="space-y-3">
-                    <label className="text-sm font-medium">Payment Option</label>
+                  {transactionType === "new" && (
+                    <div className="space-y-3">
+                      <label className="text-sm font-medium">Payment Option</label>
                     <div className="grid grid-cols-2 gap-3">
                       <Button
                         type="button"
@@ -496,14 +556,17 @@ const Index = () => {
                       </Button>
                     </div>
                     {paymentOption === "partial" && (
-                      <p className="text-sm text-muted-foreground">
-                        Remaining ₹{Math.round(totals.total * 0.5).toLocaleString()} to be paid later
-                      </p>
-                    )}
-                  </div>
+                        <p className="text-sm text-muted-foreground">
+                          Remaining ₹{Math.round(totals.total * 0.5).toLocaleString()} to be paid later
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   <Button className="w-full" size="lg" onClick={handleProceedToPayment}>
-                    {paymentOption === "full" ? "Proceed to Payment" : "Pay 50% Now"}
+                    {transactionType === "complete" 
+                      ? "Pay Remaining ₹1,999" 
+                      : (paymentOption === "full" ? "Proceed to Payment" : "Pay 50% Now")}
                   </Button>
                 </CardContent>
               </Card>
