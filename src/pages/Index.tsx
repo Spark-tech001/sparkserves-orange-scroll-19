@@ -177,7 +177,10 @@ const Index = () => {
             }
 
             // Payment verified successfully, now save to database
-            await processSuccessfulPayment(response.razorpay_payment_id);
+            await processSuccessfulPayment({
+              paymentId: response.razorpay_payment_id,
+              orderId: response.razorpay_order_id
+            });
             
           } catch (error) {
             console.error('Payment verification error:', error);
@@ -212,8 +215,30 @@ const Index = () => {
     }
   };
 
-  const processSuccessfulPayment = async (paymentId: string) => {
+  const processSuccessfulPayment = async ({ paymentId, orderId }: { paymentId: string; orderId: string }) => {
     try {
+      // For "complete previous" transactions, only save payment record
+      if (transactionType === "complete") {
+        await supabase
+          .from('payments')
+          .insert({
+            invoice_id: null,
+            amount: 1999, // Remaining 50% amount
+            status: 'completed',
+            payment_method: 'razorpay',
+            razorpay_payment_id: paymentId,
+            razorpay_order_id: orderId
+          });
+        
+        toast({
+          title: "Payment Successful!",
+          description: "Your remaining payment has been completed.",
+        });
+
+        setTransactionType("new");
+        return;
+      }
+
       // Calculate payment amount based on selected option
       const paymentAmount = paymentOption === "partial" ? Math.round(totals.total * 0.5) : totals.total;
 
@@ -252,14 +277,15 @@ const Index = () => {
           amount: totals.total,
           start_date: startDate.toISOString().split('T')[0],
           end_date: endDate.toISOString().split('T')[0],
-          next_due_date: nextDueDate.toISOString().split('T')[0]
+          next_due_date: nextDueDate.toISOString().split('T')[0],
+          status: paymentOption === "partial" ? 'pending' : 'active'
         })
         .select()
         .single();
 
       if (subscriptionError) throw subscriptionError;
 
-      // Save payment record
+      // Save payment record with all details
       await supabase
         .from('payments')
         .insert({
@@ -267,7 +293,8 @@ const Index = () => {
           amount: paymentAmount,
           status: 'completed',
           payment_method: 'razorpay',
-          razorpay_payment_id: paymentId
+          razorpay_payment_id: paymentId,
+          razorpay_order_id: orderId
         });
       
       toast({
